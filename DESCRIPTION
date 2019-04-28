@@ -1,0 +1,13 @@
+Package: packEJ
+Title: Eachan Johnson's Personal R Package
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Eachan",
+           family = "Johnson",
+           role = c("aut", "cre"),
+           email = "eachab.johnson@gmail.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Eachan Johnson's personal R package
+License: MIT
+Encoding: UTF-8
+LazyData: true
