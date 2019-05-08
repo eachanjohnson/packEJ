@@ -3,7 +3,7 @@
 \name{log_plot}
 \alias{log_plot}
 \alias{log_plot.gg}
-\title{Add log axis to ggplot2}
+\title{Add log axis}
 \usage{
 log_plot(x, ...)
 
@@ -15,8 +15,8 @@ log_plot(x, ...)
 \item{axes}{Which axes to log-transform}
 }
 \value{
-ggplot2 object
+\code{ggplot2} object
 }
 \description{
-Add log axis to ggplot2.
+Add log axis
 }

@@ -19,7 +19,25 @@ heat_map(x, ...)
   col_palette = NULL, ...)
 }
 \arguments{
-\item{x}{A matrix}
+\item{x}{A matrix, Matricks, or data frame}
+
+\item{...}{Passed to \code{gplots::heatmap.2}}
+
+\item{filename}{File to save as}
+
+\item{width}{File width}
+
+\item{height}{File height}
+
+\item{hclustfun}{Function for clustering}
+
+\item{shrink_labels}{Length-2 numeric vector for how much to shrink row and column labels}
+
+\item{heat_palette}{RColorBrewer palette for values}
+
+\item{row_palette}{RColorBrewer palette for row side-information}
+
+\item{col_palette}{RColorBrewer palette for colum side-information}
 
 \item{x}{A data frame}
 }
@@ -30,6 +48,4 @@ A plot
 }
 \description{
 Plot a heat map
-
-Plot a heat map.
 }

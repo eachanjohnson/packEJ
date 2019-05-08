@@ -3,16 +3,26 @@
 \name{join}
 \alias{join}
 \alias{join.character}
+\alias{join.numeric}
 \title{Concatenate a character vector}
 \usage{
 join(x, ...)
 
 \method{join}{character}(x, char = ", ", ...)
+
+\method{join}{numeric}(x, char = ", ", ...)
 }
 \arguments{
 \item{x}{Object to join}
 
 \item{x}{Character vector}
+
+\item{x}{Numeric vector}
+}
+\value{
+Character vector of length 1.
+
+Character vector of length 1.
 }
 \description{
 Concatenate a character vector

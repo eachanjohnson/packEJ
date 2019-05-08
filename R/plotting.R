@@ -1,23 +1,13 @@
-#' Convert to exponent 10
-#'
-#' @param x Numeric
-#'
-#' @return Formatted expression
+#' Add log axis
 #'
 #' @export
-expo_log10 <- scales::trans_format('log10', scales::math_format(10^.x))
-
-#' Add log axis to ggplot2
+#'
 log_plot <- function(x, ...) UseMethod('log_plot')
 
-#' Add log axis to ggplot2
-#'
-#' Add log axis to ggplot2.
-#'
 #' @param x A data frame
 #' @param axes Which axes to log-transform
 #'
-#' @return ggplot2 object
+#' @return \code{ggplot2} object
 #'
 #' @export
 #' @rdname log_plot
@@ -35,33 +25,31 @@ log_plot.gg <- function(x, axes='x') {
 }
 
 #' Plot a dose response curve
+#'
+#' @export
 plot_dose_response <- function(x, ...) UseMethod('plot_dose_response')
 
-#' Plot a dose response curve
-#'
-#' Create a new factor from two existing factors, where the new factor's levels
-#' are the union of the levels of the input factors.
-#'
 #' @param x A data frame
 #' @param xvar X-axis column
 #' @param yvar Y-axis column
-#' @param wt
-#' @param highlights
-#' @param group
-#' @param facet
-#' @param bg_color
-#' @param wt_color
-#' @param palette
-#' @param highlight_size
-#' @param filename
-#' @param panel_width
-#' @param panel_height
-#' @param legend_width
+#' @param wt String to match for WT strains
+#' @param highlights Data frame for filtering high;ighted conditions
+#' @param group Grouping
+#' @param facet Faceting
+#' @param bg_color Color for bulk of strains
+#' @param wt_color Color for WT strains
+#' @param palette Palette for highlighted lines
+#' @param highlight_size Size of highlighted interaction lines
+#' @param filename Filename to save
+#' @param panel_width Width of each panel in inches
+#' @param panel_height Height of each panel in inches
+#' @param legend_width Width of legend in inches
 #'
 #' @return ggplot2 object
 #'
 #' @export
 #' @importFrom dplyr %>%
+#'
 #' @rdname plot_dose_response
 plot_dose_response.data.frame <- function(x, xvar, yvar, wt='H37Rv', highlights=NULL,
                                           group='paste(strain, compound)',
@@ -74,16 +62,20 @@ plot_dose_response.data.frame <- function(x, xvar, yvar, wt='H37Rv', highlights=
                                           labeller=ggplot2::as_labeller(function(x) x),
                                           scales='free_x',
                                           filename=NULL,
-                                          panel_width=2, panel_height=2, legend_width=1
-) {
+                                          panel_width=2, panel_height=2, legend_width=1) {
 
-  if (is.null(highlights)) {
+  if ( is.null(highlights) ) {
     highlight_data <- x
+    legend_width <- 0
   } else {
     highlight_data <- x %>% dplyr::semi_join(highlights)
   }
 
   wt_data <- x %>% dplyr::filter(grepl(wt, strain))
+
+  n_panels <- x[ , facet] %>% distinct() %>% nrow()
+  n_row <- ceiling(sqrt(n_panels))
+  n_col <- ceiling(n_panels / nrow)
 
   g <- (ggplot2::ggplot(x,
                         ggplot2::aes_string(xvar, yvar, group=group)) +
@@ -95,18 +87,38 @@ plot_dose_response.data.frame <- function(x, xvar, yvar, wt='H37Rv', highlights=
           ggplot2::facet_wrap(facet, scales=scales, labeller=labeller) %>%
           log_plot(x)) +
     ggplot2::labs(x=xvar, y=yvar)
-  print(g)
+
+  if (!is.null(filename)) {
+
+    fig_width <- panel_width * n_col + legend_width
+    fig_height <- panel_width * n_row
+
+    println('Saving plot as', filename, '...')
+    ggplot2::ggsave(filename, plot=g, width=fig_width, height=fig_height)
+
+  }
+
+  return ( g )
 
 }
 
 #' Plot a heat map
-heat_map <- function(x, ...) UseMethod('heat_map')
-
-#' Plot a heat map.
 #'
-#' @param x A matrix
+#' @param x A matrix, Matricks, or data frame
 #'
 #' @return A plot
+#' @export
+heat_map <- function(x, ...) UseMethod('heat_map')
+
+#' @param filename File to save as
+#' @param width File width
+#' @param height File height
+#' @param hclustfun Function for clustering
+#' @param shrink_labels Length-2 numeric vector for how much to shrink row and column labels
+#' @param heat_palette RColorBrewer palette for values
+#' @param row_palette RColorBrewer palette for row side-information
+#' @param col_palette RColorBrewer palette for colum side-information
+#' @param ... Passed to \code{gplots::heatmap.2}
 #'
 #' @export
 #' @rdname heat_map
@@ -142,8 +154,9 @@ heat_map.matrix <- function(x, filename=NULL, width=12, height=12,
 }
 
 #' @param x A data frame
-#'
+#' @inheritParams heat_map.matrix
 #' @return A plot
+#'
 #' @export
 #' @rdname heat_map
 heat_map.data.frame <- function(x, filename=NULL, width=12, height=12,

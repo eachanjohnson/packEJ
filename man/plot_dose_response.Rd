@@ -22,12 +22,33 @@ plot_dose_response(x, ...)
 
 \item{yvar}{Y-axis column}
 
-\item{legend_width}{}
+\item{wt}{String to match for WT strains}
+
+\item{highlights}{Data frame for filtering high;ighted conditions}
+
+\item{group}{Grouping}
+
+\item{facet}{Faceting}
+
+\item{bg_color}{Color for bulk of strains}
+
+\item{wt_color}{Color for WT strains}
+
+\item{palette}{Palette for highlighted lines}
+
+\item{highlight_size}{Size of highlighted interaction lines}
+
+\item{filename}{Filename to save}
+
+\item{panel_width}{Width of each panel in inches}
+
+\item{panel_height}{Height of each panel in inches}
+
+\item{legend_width}{Width of legend in inches}
 }
 \value{
 ggplot2 object
 }
 \description{
-Create a new factor from two existing factors, where the new factor's levels
-are the union of the levels of the input factors.
+Plot a dose response curve
 }

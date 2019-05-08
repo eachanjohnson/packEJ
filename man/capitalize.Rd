@@ -2,10 +2,13 @@
 % Please edit documentation in R/utils.R
 \name{capitalize}
 \alias{capitalize}
+\alias{capitalise}
 \alias{capitalize.character}
 \title{Capitalize a string or vector of strings}
 \usage{
 capitalize(x, ...)
+
+capitalise(x, ...)
 
 \method{capitalize}{character}(x, lowertail = FALSE)
 }
@@ -13,6 +16,9 @@ capitalize(x, ...)
 \item{x}{Object to capitalize}
 
 \item{x}{Character vector}
+}
+\value{
+Character vector with first character capitalized.
 }
 \description{
 Capitalize a string or vector of strings

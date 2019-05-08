@@ -1,12 +1,11 @@
 Package: packEJ
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Eachan's Personal R Package
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Eachan Johnson
+Maintainer: Eachan Johnson <eachan.johnson@gmail.com>
+Description: Eachan's Personal R Package.
+License: MIT
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
