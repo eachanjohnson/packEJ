@@ -13,16 +13,18 @@
 #' @export
 #'
 #' @examples
-#' annotation_df <- data.frame(col_id=LETTERS[1:3], annotation=letters[1:3])
+#' annotation_df <- data.frame(col_id=LETTERS[1:5], annotation=letters[1:5])
 #' m <- matrix(rnorm(9), ncol=3)
-#' colnames(m) <- annotation_df$col_id
+#' colnames(m) <- annotation_df$col_id[1:3]
 #' Matricks(m, cols_annotation=annotation_df)
+#'
 Matricks <- function(data=NA,
                      rows_title=NULL, cols_title=NULL,
                      rows_annotation=NULL, cols_annotation=NULL,
                      ...) {
 
-  if ( ! inherits(data, 'matrix') ) stop('Matricks needs a matrix')
+  if ( ! inherits(data, 'matrix') )
+    stop('Matricks needs a matrix')
 
   new_matrix <- data
 
@@ -35,8 +37,10 @@ Matricks <- function(data=NA,
   }
 
 
-  rowtitle <- names(dimnames)[1] %or% rows_title %or% colnames(rows_annotation)[1]
-  coltitle <- names(dimnames)[2] %or% cols_title %or% colnames(cols_annotation)[1]
+  rowtitle <- names(dimnames)[1] %or% rows_title %or% colnames(rows_annotation)[1] %or% NA
+  coltitle <- names(dimnames)[2] %or% cols_title %or% colnames(cols_annotation)[1] %or% NA
+
+  dimnames(new_matrix) <- setNames(list(rownames(data), colnames(data)), c(rowtitle, coltitle))
 
   if ( ! is.null(rows_annotation) ) {
 
@@ -48,7 +52,19 @@ Matricks <- function(data=NA,
     all_rows_in_key <- !is.null(rownames(new_matrix)) && all(rownames(new_matrix) %in% row_keys)
 
     if ( ! null_rows_and_numeric_key && ! all_rows_in_key )
-      stop('Mismatch between rownames and rowname annotations')
+      stop('Mismatch between rownames (',
+            rownames(new_matrix),
+           ') and rowname annotations (',
+            row_keys,
+           ')')
+
+    row_keys <- intersect(row_keys, rownames(new_matrix))
+
+    rows_annotation <- rows_annotation[rows_annotation[ , rowtitle, drop=TRUE] %in% row_keys, ]
+
+    new_matrix <- new_matrix[row_keys, , drop=FALSE]
+
+    #names(attr(new_matrix, 'dimnames'))[1] <- rowtitle
 
   }
 
@@ -62,14 +78,24 @@ Matricks <- function(data=NA,
     all_cols_in_key <- !is.null(colnames(new_matrix)) && all(colnames(new_matrix) %in% col_keys)
 
     if ( ! (null_cols_and_numeric_key || all_cols_in_key) )
-      stop('Mismatch between colnames and colname annotations')
+      stop('Mismatch between colnames (',
+           colnames(new_matrix),
+           ') and colname annotations (',
+           col_keys,
+           ')')
+
+    col_keys <- intersect(col_keys, colnames(new_matrix))
+
+    cols_annotation <- cols_annotation[cols_annotation[ , coltitle, drop=TRUE] %in% col_keys, ]
+
+    new_matrix <- new_matrix[ , col_keys, drop=FALSE]
+
+    #names(attr(new_matrix, 'dimnames'))[2] <- coltitle
 
   }
 
   attr(new_matrix, 'rows_title')     <- rowtitle
   attr(new_matrix, 'cols_title')     <- coltitle
-  names(attr(new_matrix, 'dimnames'))[1] <- rowtitle
-  names(attr(new_matrix, 'dimnames'))[2] <- coltitle
   attr(new_matrix, 'rows_annotation') <- rows_annotation
   attr(new_matrix, 'cols_annotation') <- cols_annotation
 
@@ -100,7 +126,7 @@ print.matricks <- function(x, ...) {
   coltitle <- attr(x, 'cols_title')
 
   cat('A Matricks object:', nrow(x), 'rows x', ncol(x), 'columns\n')
-  if ( !is.null(rowtitle) ) {
+  if ( !is.na(rowtitle) ) {
 
     rowann <- attr(x, 'rows_annotation')
     cat('Row labels:', rowtitle, ';', class(rowann), '[', join(dim(rowann), ','), ']\n')
@@ -108,7 +134,7 @@ print.matricks <- function(x, ...) {
 
   }
 
-  if ( !is.null(coltitle) ) {
+  if ( !is.na(coltitle) ) {
 
     colann <- attr(x, 'cols_annotation')
     cat('Column labels:', coltitle, ';', class(colann), '[', join(dim(colann), ','), ']\n')
@@ -157,34 +183,23 @@ subset.matricks <- function(x, i, j,
   colann_columns <- colnames(attr(x, 'cols_annotation'))
   rowann_columns <- colnames(attr(x, 'rows_annotation'))
 
+  filter_rows    <- any(names(filter) %in% rowann_columns)
+  filter_columns <- any(names(filter) %in% colann_columns)
+
+  if ( filter_rows && filter_columns )
+    stop('Column names for filter in both row and column annotations')
+
+  filter_attr <- filter_rows %?% attr(x, 'rows_annotation') %:% attr(x, 'cols_annotation')
+  dim_title <- filter_rows %?% attr(x, 'rows_title') %:% attr(x, 'cols_title')
+
   if ( inherits(filter, 'data.frame') ) {
 
-    filter_rows <- any(colnames(filter) %in% rowann_columns)
-    filter_columns <- any(colnames(filter) %in% colann_columns)
+    common_columns <- intersect(colnames(filter), colnames(filter_attr))
 
-    if ( filter_rows && filter_columns )
-      stop('Column names for filter in both row and column annotations')
-
-    filter_attr <- filter_rows %?% attr(x, 'rows_annotation') %:% attr(x, 'cols_annotation')
-    dim_title <- filter_rows %?% attr(x, 'rows_title') %:% attr(x, 'cols_title')
-
-    new_attr <- filter_attr %>% dplyr::semi_join(filter, by=intersect(colnames(filter), colnames(filter_attr)))
-
-    dimname_subset <- new_attr[ , dim_title, drop=TRUE]
-
-    if ( filter_rows )    x <- x[dimname_subset, ]
-    if ( filter_columns ) x <- x[ , dimname_subset]
+    new_attr <- filter_attr %>%
+      dplyr::semi_join(filter, by=common_columns)
 
   } else {
-
-    filter_rows    <- any(names(filter) %in% rowann_columns)
-    filter_columns <- any(names(filter) %in% colann_columns)
-
-    if ( filter_rows && filter_columns )
-      stop('Column names for filter in both row and column annotations')
-
-    filter_attr <- filter_rows %?% attr(x, 'rows_annotation') %:% attr(x, 'cols_annotation')
-    dim_title   <- filter_rows %?% attr(x, 'rows_title') %:% attr(x, 'cols_title')
 
     new_attr <- filter_attr
 
@@ -200,7 +215,6 @@ subset.matricks <- function(x, i, j,
 
   if ( filter_rows )    x <- x[dimname_subset, ]
   if ( filter_columns ) x <- x[ , dimname_subset]
-
 
   return ( x )
 
@@ -222,34 +236,45 @@ subset.matricks <- function(x, i, j,
 #' print(m2[1:3, ])
 #'
 `[.matricks` <- function(x, i, j,
-                         drop=missing(i) %or% length(cols) == 1) {
+                         drop=FALSE) {
 
   original_class <- class(x)
 
-  new_matrix <- NextMethod()
+  new_matrix <- unclass(x)[i, j, drop=drop]
 
-  annotation_names <- setdiff(names(attributes(x)), names(attributes(new_matrix)))
+  if ( drop ) return (new_matrix)
 
-  for ( n in annotation_names ) {
+  rowann <- attr(x, 'rows_annotation')
+  colann <- attr(x, 'cols_annotation')
 
-    this_is_annotation <- grepl('_annotation$', n)
-    this_title <- this_is_annotation %?% attr(x, gsub('_annotation$', '_title', n)) %:% attr(x, n)
-    dim_name_f <- grepl('^cols_', n) %?% colnames %:% rownames
+  if (!missing(i) && !is.numeric(i) && !is.null(rowann)) {
 
-    if (this_is_annotation) {
-
-      old_attr <- attr(x, n)
-      new_attr <- droplevels(old_attr[old_attr[ , this_title, drop=TRUE] %in% dim_name_f(new_matrix), ])
-
-    } else {
-
-      new_attr <- this_title
-
-    }
-
-    attr(new_matrix, n) <- new_attr
+    rownames(rowann) <- rowann[ , attr(x, 'rows_title'), drop=TRUE]
 
   }
+
+  if (!missing(j) && !is.numeric(j) && !is.null(colann)) {
+
+    rownames(colann) <- colann[ , attr(x, 'cols_title'), drop=TRUE]
+  }
+
+  rowann <- rowann[i, , drop=FALSE]
+  rownames(rowann) <- NULL
+  colann <- colann[j, , drop=FALSE]
+  rownames(colann) <- NULL
+
+  new_matrix <- Matricks(new_matrix,
+                         rows_title=attr(x, 'rows_title'),
+                         cols_title=attr(x, 'cols_title'),
+                         rows_annotation=rowann,
+                         cols_annotation=colann)
+
+  # if ( !is.null(attr(new_matrix, 'cols_annotation')) )
+  #   attr(new_matrix, 'cols_annotation') <- attr(new_matrix, 'cols_annotation')[ , j, drop=FALSE]
+  #
+  # if ( !is.null(attr(new_matrix, 'rows_annotation')) )
+  #   attr(new_matrix, 'rows_annotation') <- attr(new_matrix, 'rows_annotation')[ , i, drop=FALSE]
+
 
   return ( invisible(new_matrix) )
 

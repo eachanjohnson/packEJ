@@ -102,6 +102,14 @@ plot_dose_response.data.frame <- function(x, xvar, yvar, wt='H37Rv', highlights=
 
 }
 
+map_labels_to_palette <- function(labels, palette) {
+
+  extended_palette <- rep(palette, times=ceiling(length(labels) / length(palette)))[seq_len(length(labels))]
+
+  setNames(extended_palette, labels)
+
+}
+
 #' Plot a heat map
 #'
 #' @param x A matrix, Matricks, or data frame
@@ -117,35 +125,95 @@ heat_map <- function(x, ...) UseMethod('heat_map')
 #' @param shrink_labels Length-2 numeric vector for how much to shrink row and column labels
 #' @param heat_palette RColorBrewer palette for values
 #' @param row_palette RColorBrewer palette for row side-information
-#' @param col_palette RColorBrewer palette for colum side-information
+#' @param col_palette RColorBrewer palette for column side-information
 #' @param ... Passed to \code{gplots::heatmap.2}
 #'
 #' @export
 #' @rdname heat_map
+#'
+#' @examples
+#' m <- matrix(rnorm(100), ncol=10)
+#' col_labels <- rep(LETTERS[1:5], 2)
+#' heat_map(m, col_side_info=col_labels, show_row_dendro=FALSE, cluster_rows=FALSE)
+#'
 heat_map.matrix <- function(x, filename=NULL, width=12, height=12,
+                            cluster_rows=TRUE,
+                            cluster_cols=TRUE,
+                            show_row_dendro=TRUE,
+                            show_col_dendro=TRUE,
                             hclustfun=function(x) hclust(x, 'ward.D2'),
+                            distfun=function(x) dist(x),
                             shrink_labels=c(1, 1),
                             heat_palette='RdBu',
-                            row_palette=NULL,
-                            col_palette=NULL,
+                            row_palette='Dark2',
+                            col_palette='Dark2',
+                            row_side_info=NULL,
+                            col_side_info=NULL,
+                            trace='none',
+                            trace_color='black',
                             ...) {
 
   colors <- RColorBrewer::brewer.pal(9, heat_palette)
 
+  row_dendro <- FALSE
 
-  if (!is.null(filename) ) {
+  if ( cluster_rows ) {
+    row_hclust <- hclustfun(distfun(x))
+    row_dendro <- as.dendrogram(row_hclust)
+  }
+
+  col_dendro <- FALSE
+
+  if ( cluster_cols ) {
+    col_hclust <- hclustfun(distfun(t(x)))
+    col_dendro <- as.dendrogram(col_hclust)
+  }
+
+  if ( ! is.null(row_side_info) ) {
+
+    ordering <- cluster_rows %?% row_hclust$order %:% seq_along(row_side_info)
+
+    row_side_labels <- unique(row_side_info[ordering])
+    row_colors      <- RColorBrewer::brewer.pal(8, row_palette)
+    row_color_map   <- unname(map_labels_to_palette(row_side_labels, row_colors)[row_side_info])
+
+  } else {
+    row_color_map <- rep('white', nrow(x))
+  }
+
+  if ( ! is.null(col_side_info) ) {
+
+    ordering <- cluster_cols %?% col_hclust$order %:% seq_along(col_side_info)
+
+    col_side_labels <- unique(col_side_info[ordering])
+    col_colors      <- RColorBrewer::brewer.pal(8, col_palette)
+    col_color_map   <- unname(map_labels_to_palette(col_side_labels, col_colors)[col_side_info])
+
+  } else {
+    col_color_map <- rep('white', ncol(x))
+  }
+
+  if ( !is.null(filename) ) {
 
     pdf(filename, width=width, height=height)
     on.exit(dev.off())
 
   }
 
+  dendro_option <- (show_row_dendro & show_col_dendro) %?%
+    'both' %:% (show_row_dendro %?%
+    'row' %:% (show_col_dendro %?% 'column' %:% 'none'))
+
   g <- gplots::heatmap.2(x,
-                         trace='none', tracecol='black',
-                         col=colors,
-                         hclustfun=hclustfun,
+                         Rowv=row_dendro,
+                         Colv=col_dendro,
+                         dendrogram=dendro_option,
                          cexRow=shrink_labels[1],
                          cexCol=shrink_labels[2],
+                         trace=trace, tracecol=trace_color,
+                         col=colors,
+                         ColSideColors=col_color_map,
+                         RowSideColors=row_color_map,
                          key.title='',
                          ...)
 
@@ -155,17 +223,26 @@ heat_map.matrix <- function(x, filename=NULL, width=12, height=12,
 
 #' @param x A data frame
 #' @inheritParams heat_map.matrix
-#' @return A plot
 #'
 #' @export
 #' @rdname heat_map
+#'
+#' @examples
+#' m <- as_df(matrix(rnorm(100), ncol=4))
+#' col_labels <- rep(LETTERS[1:2], 2)
+#' heat_map(m, col_side_info=col_labels, show_row_dendro=FALSE, cluster_rows=FALSE)
+#'
 heat_map.data.frame <- function(x, filename=NULL, width=12, height=12,
                                 hclustfun=function(x) hclust(x, 'ward.D2'),
                                 shrink_labels=c(1, 1),
                                 heat_palette='RdBu',
-                                row_palette=NULL,
-                                col_palette=NULL,
+                                row_palette='Dark2',
+                                col_palette='Dark2',
+                                row_side_info=NULL,
+                                col_side_info=NULL,
                                 ...) {
+
+  x <- x[ , sapply(x, is.numeric)]
 
   heat_map(as.matrix(x),
            filename=filename, width=width, height=height,
@@ -174,6 +251,54 @@ heat_map.data.frame <- function(x, filename=NULL, width=12, height=12,
            heat_palette=heat_palette,
            row_palette=row_palette,
            col_palette=col_palette,
+           row_side_info=row_side_info,
+           col_side_info=col_side_info,
+           ...)
+
+}
+
+#' @param x A \code{Matricks} object
+#' @inheritParams heat_map.matrix
+#'
+#' @export
+#' @rdname heat_map
+#'
+#' @importFrom dplyr %>%
+#'
+#' @examples
+#' annotation_df <- data.frame(col_id=LETTERS[1:4], annotation=rep(letters[1:2], 2))
+#' m <- matrix(rnorm(100), ncol=4)
+#' colnames(m) <- annotation_df$col_id
+#' m2 <- Matricks(m, cols_annotation=annotation_df)
+#' heat_map(m2, col_side_info='annotation')
+#'
+heat_map.matricks <- function(x, filename=NULL, width=12, height=12,
+                                hclustfun=function(x) hclust(x, 'ward.D2'),
+                                shrink_labels=c(1, 1),
+                                heat_palette='RdBu',
+                                row_palette='Dark2',
+                                col_palette='Dark2',
+                                row_side_info=NULL,
+                                col_side_info=NULL,
+                                ...) {
+
+  rowann <- attr(x, 'rows_annotation')
+  row_color_labels <- (is.null(row_side_info) && is.null(rowann)) %?%
+    NULL %:% as.character(dplyr::pull(rowann, row_side_info))
+
+  colann <- attr(x, 'cols_annotation')
+  col_color_labels <- (is.null(col_side_info) && is.null(colann)) %?%
+    NULL %:% as.character(dplyr::pull(colann, col_side_info))
+
+  heat_map(unclass(x),
+           filename=filename, width=width, height=height,
+           hclustfun=hclustfun,
+           shrink_labels=shrink_labels,
+           heat_palette=heat_palette,
+           row_palette=row_palette,
+           col_palette=col_palette,
+           row_side_info=row_color_labels,
+           col_side_info=col_color_labels,
            ...)
 
 }

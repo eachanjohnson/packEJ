@@ -4,19 +4,30 @@
 \alias{heat_map}
 \alias{heat_map.matrix}
 \alias{heat_map.data.frame}
+\alias{heat_map.Matricks}
 \title{Plot a heat map}
 \usage{
 heat_map(x, ...)
 
 \method{heat_map}{matrix}(x, filename = NULL, width = 12,
-  height = 12, hclustfun = function(x) hclust(x, "ward.D2"),
-  shrink_labels = c(1, 1), heat_palette = "RdBu", row_palette = NULL,
-  col_palette = NULL, ...)
+  height = 12, cluster_rows = TRUE, cluster_cols = TRUE,
+  show_row_dendro = TRUE, show_col_dendro = TRUE,
+  hclustfun = function(x) hclust(x, "ward.D2"), distfun = function(x)
+  dist(x), shrink_labels = c(1, 1), heat_palette = "RdBu",
+  row_palette = "Dark2", col_palette = "Dark2", row_side_info = NULL,
+  col_side_info = NULL, trace = "none", trace_color = "black", ...)
 
 \method{heat_map}{data.frame}(x, filename = NULL, width = 12,
   height = 12, hclustfun = function(x) hclust(x, "ward.D2"),
-  shrink_labels = c(1, 1), heat_palette = "RdBu", row_palette = NULL,
-  col_palette = NULL, ...)
+  shrink_labels = c(1, 1), heat_palette = "RdBu",
+  row_palette = "Dark2", col_palette = "Dark2", row_side_info = NULL,
+  col_side_info = NULL, ...)
+
+\method{heat_map}{Matricks}(x, filename = NULL, width = 12,
+  height = 12, hclustfun = function(x) hclust(x, "ward.D2"),
+  shrink_labels = c(1, 1), heat_palette = "RdBu",
+  row_palette = "Dark2", col_palette = "Dark2", row_side_info = NULL,
+  col_side_info = NULL, ...)
 }
 \arguments{
 \item{x}{A matrix, Matricks, or data frame}
@@ -37,15 +48,31 @@ heat_map(x, ...)
 
 \item{row_palette}{RColorBrewer palette for row side-information}
 
-\item{col_palette}{RColorBrewer palette for colum side-information}
+\item{col_palette}{RColorBrewer palette for column side-information}
 
 \item{x}{A data frame}
+
+\item{x}{A \code{Matricks} object}
 }
 \value{
-A plot
-
 A plot
 }
 \description{
 Plot a heat map
+}
+\examples{
+m <- matrix(rnorm(100), ncol=10)
+col_labels <- rep(LETTERS[1:5], 2)
+heat_map(m, col_side_info=col_labels, show_row_dendro=FALSE, cluster_rows=FALSE)
+
+m <- as_df(matrix(rnorm(100), ncol=4))
+col_labels <- rep(LETTERS[1:2], 2)
+heat_map(m, col_side_info=col_labels, show_row_dendro=FALSE, cluster_rows=FALSE)
+
+annotation_df <- data.frame(col_id=LETTERS[1:4], annotation=rep(letters[1:2], 2))
+m <- matrix(rnorm(100), ncol=4)
+colnames(m) <- annotation_df$col_id
+m2 <- Matricks(m, cols_annotation=annotation_df)
+heat_map(m2, col_side_info='annotation')
+
 }

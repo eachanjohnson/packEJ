@@ -33,8 +33,12 @@
 #'
 `%?%` <- function(x, y) {
 
-  if ( is.logical(x) & length(x) > 0)
-    structure(list(predicate=x, true=y), class='ternary')
+  if ( is.logical(x) & length(x) > 0){
+    r <- list(predicate=x)
+    # delayedAssign('z', y)
+    r$true <- y
+    return ( structure(r, class='ternary') )
+  }
   else
     stop('LHS is not non-zero-length logical: ', class(x), '[', length(x), ']')
 
@@ -48,13 +52,15 @@
 #' @export
 #'
 #' @rdname `%?%`
-`%:%` <- function(x, y) {
+`%:%` <- function(x, z) {
+
+  delayedAssign('zz', z)
 
   if ( inherits(x, 'ternary') ) {
     if ( x$predicate ) {
       x$true #%or% NA
     } else {
-      y #%or% NA
+      zz #%or% NA
     }
   }
   else stop('LHS is not ternary: ', class(x))

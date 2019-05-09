@@ -8,7 +8,7 @@
 \method{subset}{matricks}(x, i, j, drop = missing(i) \%or\% length(cols)
   == 1, filter = NULL)
 
-\method{[}{matricks}(x, i, j, drop = missing(i) \%or\% length(cols) == 1)
+\method{[}{matricks}(x, i, j, drop = FALSE)
 }
 \arguments{
 \item{x}{\code{\link{Matricks}} object.}

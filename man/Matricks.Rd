@@ -25,8 +25,9 @@ Matricks object; inherits from \code{matrix}.
 Matrix with side information. See \link{matrix} for description of parameters.
 }
 \examples{
-annotation_df <- data.frame(col_id=LETTERS[1:3], annotation=letters[1:3])
+annotation_df <- data.frame(col_id=LETTERS[1:5], annotation=letters[1:5])
 m <- matrix(rnorm(9), ncol=3)
-colnames(m) <- annotation_df$col_id
+colnames(m) <- annotation_df$col_id[1:3]
 Matricks(m, cols_annotation=annotation_df)
+
 }
