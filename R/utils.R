@@ -136,3 +136,38 @@ capitalize.character <- function(x, lowertail=FALSE) {
 #'
 #' @export
 expo_log10 <- scales::trans_format('log10', scales::math_format(10^.x))
+
+#' Column data manipulation
+#'
+#' @param x Data frame
+#'
+#' @return Data frame
+#'
+#' @importFrom dplyr %>%
+#'
+#' @export
+#'
+#' @examples
+#' d <- data.frame(A=LETTERS, B=1:26, C=letters)
+#' map_cols(d, c('A', 'B'), fun=function(x) apply(x, 1, paste, collapse='__'))
+#'
+map_cols <- function(x, columns, new_column_name='new_column', fun=function(x) x) {
+
+  x_ <- dplyr::distinct(dplyr::ungroup(x)[ , columns])
+
+  x_$.new_col <- fun(x_)
+
+  if ( new_column_name %in% colnames(x_) ) {
+
+    x_[ , new_column_name] <- x_$.new_col
+    x_$.new_col <- NULL
+
+  } else {
+
+    colnames(x_)[colnames(x_) == '.new_col'] <- new_column_name
+
+  }
+
+  return ( dplyr::left_join(x, x_, by=intersect(colnames(x), colnames(x_))) )
+
+}

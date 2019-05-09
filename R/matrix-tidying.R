@@ -89,6 +89,8 @@ as_df.numeric <- function(x, ...) {
 #'
 #' @param x Data structure
 #'
+#' @export
+#'
 #' @return Data frame in long format
 pivot_long <- function(x, ...) UseMethod('pivot_long')
 
@@ -197,6 +199,7 @@ pivot_long.matricks <- function(x, varnames=names(dimnames(x)),
 #' Force wide (matrix) format
 #'
 #' @param x Data frame
+#' @export
 #'
 #' @return Data frame in wide format Matricks
 pivot_wide <- function(x, ...) UseMethod('pivot_wide')
@@ -226,9 +229,16 @@ pivot_wide.data.frame <- function(x, key.vars, id.vars, value.var,
   value <- dots$value %or% value.var #%or% 'value'
   #rownames <- dots$rownames %or%  %or% 'rownames'
 
-  x$col_id <- vapply(seq_len(nrow(x)), function(i) join(x[i, key, drop=TRUE], char='__'), 'a')
+  #x$col_id <- vapply(seq_len(nrow(x)), function(i) join(x[i, key, drop=TRUE], char='__'), 'a')
+  if ( length(key) > 1 )
+    x <- map_cols(x, key, 'col_id', function(x) apply(x, 1, paste, collapse='__'))
+  else
+    x$col_id <- x[ , key, drop=TRUE]
   # print(x$col_id)
-  x$row_id <- vapply(seq_len(nrow(x)), function(i) join(x[i, id.vars, drop=TRUE], char='__'), 'a')
+  if ( length(id.vars) > 1 )
+    x <- map_cols(x, id.vars, 'row_id', function(x) apply(x, 1, paste, collapse='__'))
+  else
+    x$row_id <- x[ , id.vars, drop=TRUE]
   # print(x$row_id)
 
   annotation_vars <- setdiff(colnames(x), c(key, id.vars, value))
