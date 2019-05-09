@@ -36,4 +36,5 @@ m <- matrix(rnorm(9), ncol=3)
 colnames(m) <- annotation_df$col_id
 m2 <- Matricks(m, cols_annotation=annotation_df)
 pivot_long(m2)
+
 }

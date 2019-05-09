@@ -27,4 +27,5 @@ colnames(m) <- annotation_df$col_id
 m2 <- Matricks(m, cols_annotation=annotation_df)
 d <- pivot_long(m2)
 pivot_wide(d, 'col_id', 'rownames', 'value', cols_annotation='annotation')
+
 }

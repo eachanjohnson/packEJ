@@ -162,7 +162,6 @@ pivot_long.data.frame <- function(x, id.vars=NULL, measure.vars=NULL,
 
 }
 
-
 #' @rdname pivot_long
 #' @export
 #'
@@ -174,6 +173,7 @@ pivot_long.data.frame <- function(x, id.vars=NULL, measure.vars=NULL,
 #' colnames(m) <- annotation_df$col_id
 #' m2 <- Matricks(m, cols_annotation=annotation_df)
 #' pivot_long(m2)
+#'
 pivot_long.matricks <- function(x, varnames=names(dimnames(x)),
                               ...,
                               na.rm = FALSE, as.is = FALSE, value.name='value') {
@@ -213,6 +213,7 @@ pivot_wide <- function(x, ...) UseMethod('pivot_wide')
 #' m2 <- Matricks(m, cols_annotation=annotation_df)
 #' d <- pivot_long(m2)
 #' pivot_wide(d, 'col_id', 'rownames', 'value', cols_annotation='annotation')
+#'
 pivot_wide.data.frame <- function(x, key.vars, id.vars, value.var,
                                   rows_annotation=NULL,
                                   cols_annotation=NULL,

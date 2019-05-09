@@ -47,8 +47,8 @@ Matricks <- function(data=NA,
 
     all_rows_in_key <- !is.null(rownames(new_matrix)) && all(rownames(new_matrix) %in% row_keys)
 
-      if ( ! null_rows_and_numeric_key && ! all_rows_in_key )
-        stop('Mismatch between rownames and rowname annotations')
+    if ( ! null_rows_and_numeric_key && ! all_rows_in_key )
+      stop('Mismatch between rownames and rowname annotations')
 
   }
 
@@ -132,9 +132,87 @@ print.matricks <- function(x, ...) {
 #' @param x \code{\link{Matricks}} object.
 #' @param i Row indices
 #' @param j Column indicies
-#' @param drop Not implemented
+#' @param drop As usual for [
+#' @param filter A data frame for a filtering join on side-information, or a named vector of
+#'   column names and values to keep.
 #'
 #' @export
+#'
+#' @examples
+#' annotation_df <- data.frame(col_id=LETTERS[1:3], annotation=letters[1:3])
+#' m <- matrix(rnorm(9), ncol=3)
+#' colnames(m) <- annotation_df$col_id
+#' m2 <- Matricks(m, cols_annotation=annotation_df)
+#' filter_df <- data.frame(col_id=LETTERS[1:2])
+#' print(subset(m2, filter=filter_df))
+#'
+#' print(subset(m2, filter=list(col_id=LETTERS[1:2])))
+#'
+subset.matricks <- function(x, i, j,
+                            drop=missing(i) %or% length(cols) == 1,
+                            filter=NULL) {
+
+  if ( is.null(filter) ) return ( x[i, j, drop=drop] )
+
+  colann_columns <- colnames(attr(x, 'cols_annotation'))
+  rowann_columns <- colnames(attr(x, 'rows_annotation'))
+
+  if ( inherits(filter, 'data.frame') ) {
+
+    filter_rows <- any(colnames(filter) %in% rowann_columns)
+    filter_columns <- any(colnames(filter) %in% colann_columns)
+
+    if ( filter_rows && filter_columns )
+      stop('Column names for filter in both row and column annotations')
+
+    filter_attr <- filter_rows %?% attr(x, 'rows_annotation') %:% attr(x, 'cols_annotation')
+    dim_title <- filter_rows %?% attr(x, 'rows_title') %:% attr(x, 'cols_title')
+
+    new_attr <- filter_attr %>% dplyr::semi_join(filter, by=intersect(colnames(filter), colnames(filter_attr)))
+
+    dimname_subset <- new_attr[ , dim_title, drop=TRUE]
+
+    if ( filter_rows )    x <- x[dimname_subset, ]
+    if ( filter_columns ) x <- x[ , dimname_subset]
+
+  } else {
+
+    filter_rows    <- any(names(filter) %in% rowann_columns)
+    filter_columns <- any(names(filter) %in% colann_columns)
+
+    if ( filter_rows && filter_columns )
+      stop('Column names for filter in both row and column annotations')
+
+    filter_attr <- filter_rows %?% attr(x, 'rows_annotation') %:% attr(x, 'cols_annotation')
+    dim_title   <- filter_rows %?% attr(x, 'rows_title') %:% attr(x, 'cols_title')
+
+    new_attr <- filter_attr
+
+    for ( i in seq_along(filter) ) {
+
+      new_attr <- new_attr[new_attr[ , names(filter)[i]] %in% filter[[i]], ]
+
+    }
+
+  }
+
+  dimname_subset <- new_attr[ , dim_title, drop=TRUE]
+
+  if ( filter_rows )    x <- x[dimname_subset, ]
+  if ( filter_columns ) x <- x[ , dimname_subset]
+
+
+  return ( x )
+
+}
+
+
+#' @param i Row indices
+#' @param j Column indicies
+#' @param drop As usual for [
+#'
+#' @export
+#' @rdname subset.matricks
 #'
 #' @examples
 #' annotation_df <- data.frame(col_id=LETTERS[1:3], annotation=letters[1:3])
