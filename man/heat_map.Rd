@@ -4,7 +4,7 @@
 \alias{heat_map}
 \alias{heat_map.matrix}
 \alias{heat_map.data.frame}
-\alias{heat_map.Matricks}
+\alias{heat_map.matricks}
 \title{Plot a heat map}
 \usage{
 heat_map(x, ...)
@@ -23,7 +23,7 @@ heat_map(x, ...)
   row_palette = "Dark2", col_palette = "Dark2", row_side_info = NULL,
   col_side_info = NULL, ...)
 
-\method{heat_map}{Matricks}(x, filename = NULL, width = 12,
+\method{heat_map}{matricks}(x, filename = NULL, width = 12,
   height = 12, hclustfun = function(x) hclust(x, "ward.D2"),
   shrink_labels = c(1, 1), heat_palette = "RdBu",
   row_palette = "Dark2", col_palette = "Dark2", row_side_info = NULL,
